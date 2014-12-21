@@ -7,16 +7,33 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/swhite24/go-rest-tutorial/models"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
+type (
+	// UserController represents the controller for operating on the User resource
+	UserController struct {
+		session *mgo.Session
+	}
+)
+
+func NewUserController(s *mgo.Session) *UserController {
+	return &UserController{s}
+}
+
 // GetUser retrieves an individual user resource
-func GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	// Stub an example user
-	u := models.User{
-		Name:   "Bob Smith",
-		Gender: "male",
-		Age:    50,
-		Id:     p.ByName("id"),
+func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	// Grab id
+	id := bson.ObjectIdHex(p.ByName("id"))
+
+	// Stub user
+	u := models.User{}
+
+	// Fetch user
+	if err := uc.session.DB("go_rest_tutorial").C("users").FindId(id).One(&u); err != nil {
+		w.WriteHeader(404)
+		return
 	}
 
 	// Marshal provided interface into JSON structure
@@ -29,7 +46,7 @@ func GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 }
 
 // CreateUser creates a new user resource
-func CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (uc UserController) CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Stub an user to be populated from the body
 	u := models.User{}
 
@@ -37,7 +54,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	json.NewDecoder(r.Body).Decode(&u)
 
 	// Add an Id
-	u.Id = "foo"
+	u.Id = bson.NewObjectId()
+
+	// Write the user to mongo
+	uc.session.DB("go_rest_tutorial").C("users").Insert(u)
 
 	// Marshal provided interface into JSON structure
 	uj, _ := json.Marshal(u)
@@ -49,7 +69,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 }
 
 // RemoveUser removes an existing user resource
-func RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	// TODO: only write status for now
+func (uc UserController) RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	// Grab id
+	id := bson.ObjectIdHex(p.ByName("id"))
+
+	// Remove user
+	uc.session.DB("go_rest_tutorial").C("users").RemoveId(id)
+
+	// Write status
 	w.WriteHeader(200)
 }
