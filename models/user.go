@@ -6,5 +6,6 @@ type (
 		Name   string
 		Gender string
 		Age    int
+		Id     string
 	}
 )
