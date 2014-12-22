@@ -26,13 +26,22 @@ func NewUserController(s *mgo.Session) *UserController {
 // GetUser retrieves an individual user resource
 func (uc UserController) GetUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Grab id
-	id := bson.ObjectIdHex(p.ByName("id"))
+	id := p.ByName("id")
+
+	// Verify id is ObjectId, otherwise bail
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Grab id
+	oid := bson.ObjectIdHex(id)
 
 	// Stub user
 	u := models.User{}
 
 	// Fetch user
-	if err := uc.session.DB("go_rest_tutorial").C("users").FindId(id).One(&u); err != nil {
+	if err := uc.session.DB("go_rest_tutorial").C("users").FindId(oid).One(&u); err != nil {
 		w.WriteHeader(404)
 		return
 	}
@@ -72,10 +81,22 @@ func (uc UserController) CreateUser(w http.ResponseWriter, r *http.Request, p ht
 // RemoveUser removes an existing user resource
 func (uc UserController) RemoveUser(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	// Grab id
-	id := bson.ObjectIdHex(p.ByName("id"))
+	id := p.ByName("id")
+
+	// Verify id is ObjectId, otherwise bail
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Grab id
+	oid := bson.ObjectIdHex(id)
 
 	// Remove user
-	uc.session.DB("go_rest_tutorial").C("users").RemoveId(id)
+	if err := uc.session.DB("go_rest_tutorial").C("users").RemoveId(oid); err != nil {
+		w.WriteHeader(404)
+		return
+	}
 
 	// Write status
 	w.WriteHeader(200)
