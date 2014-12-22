@@ -20,14 +20,17 @@ func main() {
 	// Get a user resource
 	r.GET("/user/:id", uc.GetUser)
 
+	// Create a new user
 	r.POST("/user", uc.CreateUser)
 
+	// Remove an existing user
 	r.DELETE("/user/:id", uc.RemoveUser)
 
 	// Fire up the server
 	http.ListenAndServe("localhost:3000", r)
 }
 
+// getSession creates a new mongo session and panics if connection error occurs
 func getSession() *mgo.Session {
 	// Connect to our local mongo
 	s, err := mgo.Dial("mongodb://localhost")
@@ -36,5 +39,7 @@ func getSession() *mgo.Session {
 	if err != nil {
 		panic(err)
 	}
+
+	// Deliver session
 	return s
 }

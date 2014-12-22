@@ -18,6 +18,7 @@ type (
 	}
 )
 
+// NewUserController provides a reference to a UserController with provided mongo session
 func NewUserController(s *mgo.Session) *UserController {
 	return &UserController{s}
 }
